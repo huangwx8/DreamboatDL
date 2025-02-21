@@ -38,6 +38,7 @@ To install the package, you can simply clone the repository and install dependen
 
 ```bash
 git clone https://github.com/huangwx8/DreamboatDL.git
+cd DreamboatDL
 python3 -m pip install -e .
 ```
 
