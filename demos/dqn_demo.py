@@ -13,6 +13,8 @@ from dreamboat.losses.mse import MSELoss
 ENV_NAME = 'MountainCar-v0'
 env = gym.make(ENV_NAME)
 
+MAX_STEPS = 200
+
 # Observations are continuous, (speed, position)
 print(env.observation_space)
 
@@ -78,7 +80,7 @@ def evaluate(agent, env, times):
     agent.eps = 0
     
     for _ in range(times):
-        s = env.reset()
+        s, _ = env.reset()
         done = False
         max_pos = -100
         t = 0
@@ -87,7 +89,11 @@ def evaluate(agent, env, times):
             t += 1
             max_pos = max(s[0],max_pos)
             a = agent.sample(s)
-            s,r,done,info = env.step(a)
+            s,r,done,_,_ = env.step(a)
+            
+            if t >= MAX_STEPS:
+                done = True
+            
             if done:
                 score += max_pos
                 avg_t += t
@@ -120,24 +126,25 @@ time_cost_list = []
 for episode in range(num_episodes):
     agent.eps = eps_high - (eps_high-eps_low)*(episode/num_episodes)
     
-    s0 = env.reset()
-    s = env.reset()
+    s0, _ = env.reset()
     done = False
     max_pos = -100
     t = 0
     
     while not done:
         t += 1
-        print(s0)
         max_pos = max(s0[0],max_pos)
         a0 = agent.sample(s0)
-        s1, r1, done, _ = env.step(a0)
+        s1, r1, done, _, _ = env.step(a0)
+        
+        if t >= MAX_STEPS:
+            done = True
         
         # Use max_pos as reward
         if done:
-            if max_pos >= 0.5:
-                # If max_pos is already large enough, add t as a punishment
-                r1 = (max_pos+0.5)+100*(1-t/200)
+            if max_pos >= 0.3:
+                # If max_pos is already large enough, add t as additional reward
+                r1 = (max_pos+0.5) + (1-t/200)
             else:
                 r1 = (max_pos+0.5)
         
